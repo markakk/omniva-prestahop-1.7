@@ -21,9 +21,6 @@ var omniva_addrese_change = false;
         var terminals = omnivaTerminals;
         var selected = false;
         var previous_list = [];
-
-        defaultSort();
-
         select.hide();
         if (select.val()){
             selected = {'id':select.val(),'text':select.find('option:selected').text(),'distance':false};
@@ -293,15 +290,17 @@ var omniva_addrese_change = false;
                 
             });
     
-            defaultSort();
-        }
-
-        function defaultSort() {
             terminals.sort(function(a, b) {
-                var itemOne = a[4];
-                var itemTwo = b[4];
-                return itemOne.localeCompare(itemTwo);
-            });
+                var distOne = a[0];
+                var distTwo = b[0];
+                if (parseFloat(distOne) < parseFloat(distTwo)) {
+                    return -1;
+                }
+                if (parseFloat(distOne) > parseFloat(distTwo)) {
+                    return 1;
+                }
+                    return 0;
+            });   
         }
         
         function calculateDistance(y,x){
@@ -386,10 +385,9 @@ var omniva_addrese_change = false;
           if (omniva_current_country == "EE"){
             map = L.map('omnivaMap').setView([58.7952, 25.5923], 7);
           }
-          L.tileLayer('https://maps.omnivasiunta.lt/tile/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.omniva.lt">Omniva</a>' +
-                    ' | Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>'
-          }).addTo(map);
+          L.tileLayer('https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.omniva.lt">Omniva</a>'
+            }).addTo(map);
 
             var Icon = L.Icon.extend({
                 options: {
@@ -726,21 +724,11 @@ var omnivaltDelivery = {
 	
 //when document is loaded...
 $(document).ready(function(){
-    launch_omniva();
-});
-
-function launch_omniva(retry = 0) {
-    if (retry >= 50) return;
-
     if ($('#omnivalt_parcel_terminal_carrier_details select').length){
         $('#omnivalt_parcel_terminal_carrier_details select').omniva({showMap: show_omniva_map});
         omnivaltDelivery.init();
         $('.delivery-options .delivery-option input[type="radio"]').on('click',function(){
             omnivaltDelivery.init();
         });
-    } else {
-        setTimeout(function() {
-            launch_omniva(retry + 1);
-        }, 200);
     }
-}
+})

@@ -63,7 +63,6 @@ class OmnivaltshippingOmnivaltadminajaxModuleFrontController extends ModuleFront
 
         if(isset($saveResult['success'])){
           $this->_module->changeOrderStatus($orderId, $this->_module->getCustomOrderState());
-          ob_clean(); // remove possible errors from prestashop
           echo json_encode($this->_module->l('Saved')); exit();
         }
         echo json_encode($saveResult); exit();
@@ -120,16 +119,15 @@ class OmnivaltshippingOmnivaltadminajaxModuleFrontController extends ModuleFront
     
     protected function printBulkLabels(){
         require_once(_PS_MODULE_DIR_.'omnivaltshipping/tcpdf/tcpdf.php');
-        require_once(_PS_MODULE_DIR_.'omnivaltshipping/fpdi/autoload.php');
+        require_once(_PS_MODULE_DIR_.'omnivaltshipping/fpdi/fpdi.php');
         $orderIds = trim($_REQUEST['order_ids'],',');
         $orderIds = explode(',',$orderIds);
         OmnivaltShipping::checkForClass('OrderInfo');
         $object = '';
-        $pdf = new \setasign\Fpdi\TcpdfFpdi('P');
+        $pdf = new FPDI();
         $pdf->setPrintHeader(false);
         $pdf->setPrintFooter(false);
-        if (is_array($orderIds)){
-          $carrier_ids = OmnivaltShipping::getCarrierIds();
+        if (is_array($orderIds))
           foreach($orderIds as $orderId){
             $orderInfoObj = new OrderInfo();
             $orderInfo = $orderInfoObj->getOrderInfo($orderId);
@@ -142,7 +140,7 @@ class OmnivaltshippingOmnivaltadminajaxModuleFrontController extends ModuleFront
             if(empty($orderInfo))
               continue;
             $order = new Order((int)$orderId);
-            if (!in_array((int)$order->id_carrier, $carrier_ids))
+            if (!($order->id_carrier == Configuration::get('omnivalt_pt') || $order->id_carrier == Configuration::get('omnivalt_c')))
               continue;
             $track_numer = $order->getWsShippingNumber();
             if ($track_numer == ''){
@@ -160,12 +158,7 @@ class OmnivaltshippingOmnivaltadminajaxModuleFrontController extends ModuleFront
               } else {
                 $orderInfoObj->saveError($orderId,addslashes($status['msg']));
                 $this->_module->changeOrderStatus($orderId, $this->_module->getErrorOrderState());
-                if (count($orderIds) > 1) {
-                  continue;
-                } else {
-                  echo $status['msg'];
-                  exit();
-                }
+                continue;
               }
             }
             $label_url = '';
@@ -187,42 +180,38 @@ class OmnivaltshippingOmnivaltadminajaxModuleFrontController extends ModuleFront
             }
             $this->_module->changeOrderStatus($orderId, $this->_module->getCustomOrderState());
             $pagecount = $pdf->setSourceFile($label_url);
-            if (file_exists($label_url)) { unlink($label_url); }
-
-            $print_type = Configuration::get('omnivalt_print_type');
-            if ($print_type === 'single') {
-              for ($i = 1; $i <= $pagecount; $i++) {
-                $tplidx = $pdf->ImportPage($i);
-                $s = $pdf->getTemplatesize($tplidx);
-                $pdf->AddPage('P', array($s['width'], $s['height']));
-                $pdf->useTemplate($tplidx);  
-              }
-            } else {
-              $newPG = array(0,4,8,12,16,20,24,28,32);
-              if ( $this->labelsMix >= 4) {
-                $pdf->AddPage();
-                $page = 1;
-                $templateId = $pdf->importPage($page);
-                $this->labelsMix = 0;
-              }
-              $tplidx = $pdf->ImportPage(1);
-              if ($this->labelsMix == 0) {
-                $pdf->useTemplate($tplidx, 5, 15, 94.5, 108, false);
-              } else if ($this->labelsMix == 1) {
-                $pdf->useTemplate($tplidx, 110, 15, 94.5, 108, false);
-              } else if ($this->labelsMix == 2) {
-                $pdf->useTemplate($tplidx, 5, 160, 94.5, 108, false);  
-              } else if ($this->labelsMix == 3) {
-                $pdf->useTemplate($tplidx, 110, 160, 94.5, 108, false);  
-              } else {
-                echo $this->_module->l('Problems with labels count, please, select one order!!!');
-                exit();
-              }
-              $this->labelsMix++;
+            /*for ($i = 1; $i <= $pagecount; $i++) {
+              $tplidx = $pdf->ImportPage($i);
+              $s = $pdf->getTemplatesize($tplidx);
+              $pdf->AddPage('P', array($s['w'], $s['h']));
+              $pdf->useTemplate($tplidx);  
             }
+            */
+/*------------- multiple -------------------*/
+$newPG = array(0,4,8,12,16,20,24,28, 32);
+if( $this->labelsMix >= 4) {
+   $pdf->AddPage();
+   $page = 1;
+   $templateId = $pdf->importPage($page);
+   $this->labelsMix = 0;
+ }
+//for ($i = 1; $i <= $pagecount; $i++) {
+  $tplidx = $pdf->ImportPage(1);
+  
+    if($this->labelsMix == 0) {
+    $pdf->useTemplate($tplidx, 5, 15, 94.5, 108, true);
+  } else if ($this->labelsMix == 1) {
+    $pdf->useTemplate($tplidx, 110, 15, 94.5, 108, true);
+  } else if ($this->labelsMix == 2) {
+    $pdf->useTemplate($tplidx, 5, 140, 94.5, 108, true);  
+  } else if ($this->labelsMix == 3) {
+    $pdf->useTemplate($tplidx, 110, 140, 94.5, 108, true);  
+  } else {echo $this->_module->l('Problems with labels count, please, select one order!!!');exit();}
+  //$pages++;
+  $this->labelsMix++;
+/*-------------------------------------*/
           }
-        }
-        $pdf->Output('Omnivalt_labels.pdf', 'I');
+        $pdf->Output('Omnivalt_labels.pdf');
     }
     public function setOmnivaOrder($id_order = '')
     {
@@ -268,9 +257,6 @@ class OmnivaltshippingOmnivaltadminajaxModuleFrontController extends ModuleFront
     protected function printBulkManifests(){
         global $cookie;
         require_once(_PS_MODULE_DIR_.'omnivaltshipping/tcpdf/tcpdf.php');
-
-        $lang = Configuration::get('omnivalt_manifest_lang');
-        if (empty($lang)) $lang = 'en';
         $orderIds = trim($_REQUEST['order_ids'],',');
         $orderIds = explode(',',$orderIds);
         OmnivaltShipping::checkForClass('OrderInfo');
@@ -283,9 +269,7 @@ class OmnivaltshippingOmnivaltadminajaxModuleFrontController extends ModuleFront
         $pdf->AddPage();
         $order_table = '';
         $count = 1;
-        if (is_array($orderIds)){
-          $carrier_ids = OmnivaltShipping::getCarrierIds();
-          $carrier_terminal_ids = OmnivaltShipping::getCarrierIds(['omnivalt_pt']);
+        if (is_array($orderIds))
           foreach($orderIds as $orderId){
             if (!$orderId)
               continue;
@@ -300,7 +284,7 @@ class OmnivaltshippingOmnivaltadminajaxModuleFrontController extends ModuleFront
             if(empty($orderInfo))
               continue;
             $order = new Order((int)$orderId);
-            if (!in_array($order->id_carrier, $carrier_ids))
+            if (!($order->id_carrier == Configuration::get('omnivalt_pt') || $order->id_carrier == Configuration::get('omnivalt_c')))
               continue;
             $track_numer = $order->getWsShippingNumber();
             if ($track_numer == ''){
@@ -316,17 +300,12 @@ class OmnivaltshippingOmnivaltadminajaxModuleFrontController extends ModuleFront
               } else {
                 $orderInfoObj->saveError($orderId,addslashes($status['msg']));
                 $this->_module->changeOrderStatus($orderId, $this->_module->getErrorOrderState());
-                if (count($orderIds) > 1) {
-                  continue;
-                } else {
-                  echo $status['msg'];
-                  exit();
-                }
+                continue;
               }
             }
             $this->setOmnivaOrder($orderId);
             $pt_address = '';
-            if (in_array($order->id_carrier, $carrier_terminal_ids)){
+            if ($order->id_carrier == Configuration::get('omnivalt_pt')){
               $cart = new Cart($order->id_cart);
               $pt_address = OmnivaltShipping::getTerminalAddress($cart->omnivalt_terminal);
             }
@@ -342,28 +321,27 @@ class OmnivaltshippingOmnivaltadminajaxModuleFrontController extends ModuleFront
             $history->id_order = (int)$orderId;
             $history->id_employee = (int)$cookie->id_employee;
             $history->changeIdOrderState((int)Configuration::get('PS_OS_SHIPPING'), $order);
-            $history->add();
-            //$history->addWithEmail(true); // broken in 1.7.6
+            $history->addWithEmail(true);
             
-          }}
+          }
         $pdf->SetFont('freeserif', '', 14);
         $id_lang = $cookie->id_lang;
         
         $shop_country = new Country(Country::getByIso(Configuration::get('omnivalt_countrycode')));
         
-        $shop_addr = '<table cellspacing="0" cellpadding="1" border="0"><tr><td>'.date('Y-m-d H:i:s').'</td><td>'.OmnivaltShipping::getTranslate('Sender address',$lang).':<br/>'.Configuration::get('omnivalt_company').'<br/>'.Configuration::get('omnivalt_address').', '.Configuration::get('omnivalt_postcode').'<br/>'.Configuration::get('omnivalt_city').', '.$shop_country->name[$id_lang].'<br/></td></tr></table>';
+        $shop_addr = '<table cellspacing="0" cellpadding="1" border="0"><tr><td>'.date('Y-m-d H:i:s').'</td><td>Siuntėjo adresas:<br/>'.Configuration::get('omnivalt_company').'<br/>'.Configuration::get('omnivalt_address').', '.Configuration::get('omnivalt_postcode').'<br/>'.Configuration::get('omnivalt_city').', '.$shop_country->name[$id_lang].'<br/></td></tr></table>';
        
         $pdf->writeHTML($shop_addr, true, false, false, false, '');
         $tbl = '
         <table cellspacing="0" cellpadding="4" border="1">
           <thead>
             <tr>
-              <th width = "40" align="right">'.OmnivaltShipping::getTranslate('No.',$lang).'</th>
-              <th>'.OmnivaltShipping::getTranslate('Shipment number',$lang).'</th>
-              <th width = "60">'.OmnivaltShipping::getTranslate('Date',$lang).'</th>
-              <th width = "40">'.OmnivaltShipping::getTranslate('Amount',$lang).'</th>
-              <th width = "60">'.OmnivaltShipping::getTranslate('Weight (kg)',$lang).'</th>
-              <th width = "210">'.OmnivaltShipping::getTranslate('Recipient address',$lang).'</th>
+              <th width = "40" align="right">Nr.</th>
+              <th>Siuntos numeris</th>
+              <th width = "60">Data</th>
+              <th width = "40" >Kiekis</th>
+              <th width = "60">Svoris (kg)</th>
+              <th width = "210">Gavėjo adresas</th>
             </tr>
           </thead>
           <tbody>
@@ -374,8 +352,8 @@ class OmnivaltshippingOmnivaltadminajaxModuleFrontController extends ModuleFront
         $pdf->SetFont('freeserif', '', 9);
         $pdf->writeHTML($tbl, true, false, false, false, '');
         $pdf->SetFont('freeserif', '', 14);
-        $sign = OmnivaltShipping::getTranslate('Courier name, surname, signature',$lang) . ' ________________________________________________<br/><br/>';
-        $sign .= OmnivaltShipping::getTranslate('Sender name, surname, signature',$lang) . ' ________________________________________________';
+        $sign = 'Kurjerio vardas, pavardė, parašas ________________________________________________<br/><br/>';
+        $sign .= 'Siuntėjo vardas, pavardė, parašas ________________________________________________';
         $pdf->writeHTML($sign, true, false, false, false, '');
         $pdf->Output('Omnivalt_manifest.pdf','I');  
         

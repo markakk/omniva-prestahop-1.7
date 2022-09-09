@@ -16,14 +16,14 @@ class OrderInfo {
           
           $order = new Order((int)$orderId);
           $cart = new Cart((int)$order->id_cart);
-          $carrier_ids = OmnivaltShipping::getCarrierIds();
-          if (!in_array($order->id_carrier, $carrier_ids))
+ 
+          if (!$order->id_carrier == Configuration::get('omnivalt_pt') || !$order->id_carrier == Configuration::get('omnivalt_c'))
             return array('error'=>'Invalid order carrier.');
           $terminal_id = $cart->omnivalt_terminal;
  
           $packs = 1;
           $weight = $order->getTotalWeight();
-          $isCod = (strpos($order->module, 'cashondelivery') !== false);
+          $isCod = ($order->module == 'cashondeliveryplus');
           $codAmount = $order->total_paid_tax_incl;
           $terminal = $terminal_id;
           $carrier = $order->id_carrier;
