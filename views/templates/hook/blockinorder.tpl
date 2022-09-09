@@ -62,17 +62,22 @@ $(document).ready(function(){
     var omnivaltPanel = $('.tab-content.omnivalt');
     //omnivaltPanel.insertAfter( ".panel.kpi-container" );
     var omnivalt_terminal_carrier = '{$omnivalt_parcel_terminal_carrier_id}';
+    var omnivalt_terminal_carrier_pc = '{$omnivalt_parcel_terminal_carrier_id_pc}';
     $('.omnivalt-carrier').on('change','select',function(){
-        if ($(this).val() == omnivalt_terminal_carrier)
+        if ($(this).val() == omnivalt_terminal_carrier) {
             $('.omnivalt-terminal').show();
-        else
+        } else if ($(this).val() == omnivalt_terminal_carrier_pc) {
+            $('.omnivalt-terminal').show();
+        } else {
             $('.omnivalt-terminal').hide();
+	}
     });
     $('.omnivalt-carrier select').trigger('change');
     
 
     
      function labelOrderInfo(){
+	 
         $("#omnivaltOrderPrintLabels").attr('disabled','disabled');
         var formData = $("#omnivaltOrderPrintLabelsForm").serialize()+'&'+$.param({
 					ajax: "1",
@@ -82,7 +87,7 @@ $(document).ready(function(){
 					});
 
 
-        $.ajax({
+        			$.ajax({
 				type:"POST",
                 url: "{$printlabelsurl}",
 				async: false,
@@ -119,7 +124,7 @@ $(document).ready(function(){
 					});
 
 
-        $.ajax({
+        			$.ajax({
 				type:"POST",
                 url: "{$moduleurl}",
 				async: false,

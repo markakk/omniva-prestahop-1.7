@@ -1,0 +1,25 @@
+2020-09-07 07:55:05 - ----- Installing OmnivaPatcher -----
+2020-09-07 07:55:05 - Edit file instruction - ADD_BEFORE
+2020-09-07 07:55:06 - Edit file instruction - ADD_BEFORE
+2020-09-07 07:55:06 - Edit file instruction - ADD_BEFORE
+2020-09-07 07:55:06 - Edit file instruction - ADD_BEFORE
+2020-09-07 07:55:06 - ----- Finished installing OmnivaPatcher -----
+2020-09-10 10:56:53 - ----- Started Update -----
+2020-09-10 10:56:53 - {"api_user":"7006496","email":"info@topbaterija.lt","ps_version":"1.7.4.2","current_version":"1.0.7","installed_patches":[]}
+2020-09-10 10:56:53 - Verifying patch
+2020-09-10 10:56:53 - Extracting patch
+2020-09-10 10:56:53 - Collecting jobs from patch
+2020-09-10 10:56:53 - Starting Jobs
+2020-09-10 10:56:53 - Begin: patch-1.1.5
+2020-09-10 10:56:53 - Edit file instruction - ADD
+2020-09-10 10:56:53 - Edit file instruction - REPLACE
+2020-09-10 10:56:53 - Edit file instruction - ADD
+2020-09-10 10:56:53 - Create file instruction - CREATE_FILE
+2020-09-10 10:56:53 - Finished: patch-1.1.5
+2020-09-10 10:56:53 - Cleaning up temporary patch directory
+2020-09-10 10:56:53 - Temporary patch directory removed
+2020-09-10 10:56:53 - ----- Finished Update -----
+2022-07-09 21:23:53 - ----- Started Update -----
+2022-07-09 21:23:53 - {"api_user":"7006496","email":"info@topbaterija.lt","ps_version":"1.7.4.2","current_version":"1.0.7","installed_patches":["1.1.5"]}
+2022-07-09 21:23:53 - Nothing to update
+2022-07-09 21:23:53 - ----- Finished Update -----

@@ -1,0 +1,21 @@
+
+========[ 2020-09-01 10:56:53 ]========
+[ ADD ] /home/u333335680/domains/topbaterija.lt/public_html/modules/omnivaltshipping/controllers/front/omnivaltadminajax.php
+
+            if (file_exists($label_url)) { unlink($label_url); }
+=======================================
+
+========[ 2020-09-01 10:56:53 ]========
+[ REPLACE ] /home/u333335680/domains/topbaterija.lt/public_html/modules/omnivaltshipping/controllers/front/omnivaltadminajax.php
+$pdf->Output('Omnivalt_labels.pdf', 'I');
+=======================================
+
+========[ 2020-09-01 10:56:53 ]========
+[ ADD ] /home/u333335680/domains/topbaterija.lt/public_html/modules/omnivaltshipping/omnivaltshipping.php
+
+      $label_url = $this->context->link->getModuleLink("omnivaltshipping", "omnivaltadminajax", array("action"=>"bulklabels", "order_ids"=>$order->id));
+=======================================
+
+========[ 2020-09-01 10:56:53 ]========
+[ CREATED ] /home/u333335680/domains/topbaterija.lt/public_html/modules/omnivaltshipping/pdf/.htaccess
+=======================================
