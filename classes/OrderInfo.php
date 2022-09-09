@@ -10,20 +10,25 @@ class OrderInfo {
 
     public function saveOrderInfo($default_data = false){
         //check if entry with such order ID already exists
+	
         if ($default_data){
           $data = array('order_id' => $default_data);
+	  
           $orderId = $default_data;
           
           $order = new Order((int)$orderId);
           $cart = new Cart((int)$order->id_cart);
  
-          if (!$order->id_carrier == Configuration::get('omnivalt_pt') || !$order->id_carrier == Configuration::get('omnivalt_c'))
+          $carrier_ids = OmnivaltShipping::getCarrierIds();
+          //if (!$order->id_carrier == Configuration::get('omnivalt_pt') || !$order->id_carrier == Configuration::get('omnivalt_c') || !$order->id_carrier == Configuration::get('omnivalt_pc'))
+          if (!in_array($order->id_carrier, $carrier_ids))
             return array('error'=>'Invalid order carrier.');
+
           $terminal_id = $cart->omnivalt_terminal;
  
           $packs = 1;
           $weight = $order->getTotalWeight();
-          $isCod = ($order->module == 'cashondeliveryplus');
+          $isCod = (strpos($order->module, 'cashondelivery') !== false); //($order->module == 'cashondeliveryplus');
           $codAmount = $order->total_paid_tax_incl;
           $terminal = $terminal_id;
           $carrier = $order->id_carrier;
@@ -37,7 +42,7 @@ class OrderInfo {
           if(empty($_POST)){
               return false;
           }
-
+  
           $orderId = Tools::getValue('order_id', NULL);
           $packs = Tools::getValue('packs', NULL);
           $weight = Tools::getValue('weight', NULL);
@@ -51,7 +56,7 @@ class OrderInfo {
         if(empty($orderId) || !is_numeric($data['order_id'])){
             return array('error'=>'Bad order ID.');
         }
-        
+       // echo '<pre>'; print_r($_POST); exit;
         $order = new Order((int)$orderId);
         
         if(!$order){
@@ -59,7 +64,7 @@ class OrderInfo {
         }
         $order->id_carrier = (int)$carrier ;
         $order->save();
-        
+       
         
         $order_carrier = new OrderCarrier((int)$order->getIdOrderCarrier());;
         $order_carrier->id_carrier = (int)$carrier;
@@ -89,6 +94,7 @@ class OrderInfo {
       
         //check if entry for order_id is not already inserted
         $orderDataCheck = $this->getOrderInfo($orderId);
+	  
         if(!empty($orderDataCheck)){
             $this->deleteOrderInfo($orderId);
             $order = new Order((int)$orderId);

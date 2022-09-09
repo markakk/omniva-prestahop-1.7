@@ -1,0 +1,58 @@
+
+========[ 2020-09-01 07:55:05 ]========
+[ ADD_BEFORE ] /home/u333335680/domains/topbaterija.lt/public_html/modules/omnivaltshipping/omnivaltshipping.php
+    'OmnivaPatcher' => 'omnivapatcher.php',
+    
+=======================================
+
+========[ 2020-09-01 07:55:06 ]========
+[ ADD_BEFORE ] /home/u333335680/domains/topbaterija.lt/public_html/modules/omnivaltshipping/omnivaltshipping.php
+
+    if (Tools::isSubmit('patch' . $this->name)) {
+      self::checkForClass('OmnivaPatcher');
+
+      $patcher = new OmnivaPatcher();
+      $this->runPatcher($patcher);
+    }
+
+    
+=======================================
+
+========[ 2020-09-01 07:55:06 ]========
+[ ADD_BEFORE ] /home/u333335680/domains/topbaterija.lt/public_html/modules/omnivaltshipping/omnivaltshipping.php
+    self::checkForClass('OmnivaPatcher');
+
+    $patcher = new OmnivaPatcher();
+
+    $installed_patches = $patcher->getInstalledPatches();
+    $latest_patch = 'OmnivaPatcher Installed';
+    if ($installed_patches) {
+      $latest_patch = $installed_patches[count($installed_patches) - 1];
+    }
+
+    $patch_link = AdminController::$currentIndex . '&configure=' . $this->name . '&patch' . $this->name . '&token=' . Tools::getAdminTokenLite('AdminModules');
+
+    $fields_form[0]['form']['input'][] = array(
+      'type' => 'html',
+      'label' => 'Patch:',
+      'name' => 'patcher_info',
+      'html_content' => '<label class="control-label"><b>' . $latest_patch . '</b></label><br><a class="btn btn-default" href="' . $patch_link . '">Check & Install Patches</a>',
+    );
+
+    
+=======================================
+
+========[ 2020-09-01 07:55:06 ]========
+[ ADD_BEFORE ] /home/u333335680/domains/topbaterija.lt/public_html/modules/omnivaltshipping/omnivaltshipping.php
+
+  private function runPatcher(OmnivaPatcher $patcherInstance)
+  {
+    $last_check = Configuration::get('omnivalt_patcher_update');
+
+    $patcherInstance->startUpdate(Configuration::get('omnivalt_api_user'), Configuration::get('PS_SHOP_EMAIL'));
+
+    Configuration::updateValue('omnivalt_patcher_update', time());
+  }
+
+  
+=======================================

@@ -6,7 +6,7 @@ class AdminOmnivaOrdersController extends ModuleAdminController
 		public function __construct()
 		{
       
-      $this->_carriers = Configuration::get('omnivalt_pt') . ',' . Configuration::get('omnivalt_c');
+      //$this->_carriers = Configuration::get('omnivalt_pt') . ',' . Configuration::get('omnivalt_c') . ',' . Configuration::get('omnivalt_pc');
       
 			$this->bootstrap = true;
       $this->name = 'AdminModList';
@@ -14,6 +14,8 @@ class AdminOmnivaOrdersController extends ModuleAdminController
 			$this->meta_title = $this->l('Omniva orders', 'omnivaltshipping');
       
 			parent::__construct();
+
+			$this->_carriers = $this->getCarrierIds();
 			if(Tools::getValue('orderSkip') != null) {
 				$this->skipOrder();
 				exit();
@@ -28,6 +30,12 @@ class AdminOmnivaOrdersController extends ModuleAdminController
 				exit();
 			}
 		}
+
+		private function getCarrierIds()
+		{
+			return implode(',', OmnivaltShipping::getCarrierIds());
+		}
+
 		public function callcarrier() {
 			$this->_module = new OmnivaltShipping();
 			$callCarrierReturn = $this->_module->call_omniva();
@@ -66,7 +74,7 @@ class AdminOmnivaOrdersController extends ModuleAdminController
 			 Where oc.tracking_number IS NOT NULL AND oc.tracking_number <>'' ".$where." 
 			 ORDER BY k.omnivalt_manifest DESC, a.id_order DESC
 			LIMIT 20";
-	
+	 
 			 $searchResponse = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($orders);
 			 die(Tools::jsonEncode($searchResponse));
 		}
@@ -162,7 +170,7 @@ class AdminOmnivaOrdersController extends ModuleAdminController
 		WHERE k.omnivalt_manifest IS NOT NULL AND k.omnivalt_manifest<>".$newOrder."  AND k.omnivalt_manifest <> -1
 		ORDER BY k.omnivalt_manifest DESC, a.id_order DESC
 		LIMIT $perPage OFFSET $from";
-
+		
         return Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($orders);
 	}
 
